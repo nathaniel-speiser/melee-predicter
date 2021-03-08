@@ -1,7 +1,8 @@
 # Slippi game files
 *.slp
 Fight-Pitt-9/
-
+replays/
+*.pkl
 
 
 # Byte-compiled / optimized / DLL files
