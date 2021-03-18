@@ -13,6 +13,10 @@ characters = ['FOX', 'FALCO', 'MARTH', 'SHEIK','JIGGLYPUFF', 'PEACH', 'ICE_CLIMB
 
 stages = ['BATTLEFIELD', 'FINAL_DESTINATION',
                'DREAM_LAND_N64', 'YOSHIS_STORY', 'FOUNTAIN_OF_DREAMS','POKEMON_STADIUM']
+
+stage_dict = {'BATTLEFIELD':'Battlefield', 'FINAL_DESTINATION':'Final Destination',
+               'DREAM_LAND_N64':'Dream Land', 'YOSHIS_STORY': 'Yoshi\'s Story',
+                'FOUNTAIN_OF_DREAMS': 'Fountain of Dreams','POKEMON_STADIUM':'Pokemon Stadium'}
 def get_ports(game):
     player_tup = game.start.players
     ports = tuple([i for i in range(4) if player_tup[i] is not None])
@@ -352,6 +356,22 @@ def process_df_igs(df):
     df2['aerial_diff'] = df['p1_aerial_hits'] - df['p1_aerial_hits']
     df2['grab_diff'] = df['p1_grabs'] - df['p2_grabs']
     df2['roll_diff'] = df['p1_rolls']-df['p2_rolls']
+    df2['stock_diff_sc'] = df['p1_stocks']**4 - df['p2_stocks']**4
+    features = list(df2.columns[4:])
+    features.remove('winner')
+    return df2, features
+
+def process_df_igs_final(df):
+    """
+    Add difference features to df (output from construct_df_igs), then OHE characters and stages.
+    Return the new df and all the features
+    """
+    df2 = df.copy()
+    df2 = ohe_chars_stage(df2)
+    df2['hit_diff'] = df['p1_total_hits'] - df['p2_total_hits']
+    df2['shield_diff'] = df['p1_shield_frames']-df['p2_shield_frames']
+    df2['early_stock_diff'] = df['p1_early_stocks_lost'] - df['p2_early_stocks_lost']
+    df2['grab_diff'] = df['p1_grabs'] - df['p2_grabs']
     df2['stock_diff_sc'] = df['p1_stocks']**4 - df['p2_stocks']**4
     features = list(df2.columns[4:])
     features.remove('winner')
