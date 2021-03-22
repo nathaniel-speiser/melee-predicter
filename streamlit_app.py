@@ -81,7 +81,7 @@ with col2:
     p2_ground = int(GS.get_final_stat('p2_ground_hits'))
     p2_smash  = int(GS.get_final_stat('p2_smash_hits'))
     p2_aerial = int(GS.get_final_stat('p2_aerial_hits'))
-    p2_other  = int(GS.get_final_stat('p2_total_hits') - p1_ground-p1_smash-p1_aerial)
+    p2_other  = int(GS.get_final_stat('p2_total_hits') - p2_ground-p2_smash-p2_aerial)
     p2_grabs  = int(GS.get_final_stat('p2_grabs'))
     p2_shield =     GS.get_final_stat('p2_shield_frames')/60
 
