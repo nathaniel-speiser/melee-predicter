@@ -14,12 +14,16 @@ features = pd.read_pickle('saved_data/features.pkl')
 
 st.title('Melee win probability predictor')
 
-uploaded_file = st.file_uploader("Choose a file")
+uploaded_file = st.file_uploader("Choose a .slp file")
 if uploaded_file is None:
-    st.write('## Please upload a file')
+    st.write('## Please upload a .slp file')
     st.stop()
 
-game=Game(uploaded_file)
+try:
+    game=Game(uploaded_file)
+except:
+    st.write("""## Must be a valid .slp file""")
+    st.stop()
 GS = GameStats(game, streamlit_model, features)
 
 
