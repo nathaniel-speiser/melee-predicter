@@ -1,0 +1,9 @@
+py_slippi==1.6.1
+matplotlib==3.3.3
+plotly==4.14.1
+tqdm==4.55.1
+streamlit==0.77.0
+numpy==1.19.5
+pandas==1.2.0
+seaborn==0.11.1
+scikit_learn==0.24.1

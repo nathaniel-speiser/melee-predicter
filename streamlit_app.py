@@ -1,66 +1,96 @@
 import streamlit as st
-from network_plotting import plot_network
+from slippi import Game
 import pandas as pd
-import pickle
-from utils import topics, topic_wordcloud, plot_topic_time, plot_chapter_topics_book, titles
-
-
-
+from utils.GameStats import GameStats
 st.set_page_config(layout='wide')
 
-uploaded_file = st.file_uploader("Choose a file")
-if uploaded_file is not None:
+
 
 ##############################################################
 # Importing data/models
-with open('saved_models/nmf_model.pkl', 'rb') as f:
-    nmf_model = pickle.load(f)
-
+streamlit_model = pd.read_pickle('saved_data/streamlit_model.pkl')
+features = pd.read_pickle('saved_data/features.pkl')
 
 ##################################################################
 
+st.title('Melee win probability predictor')
+
+uploaded_file = st.file_uploader("Choose a file")
+if uploaded_file is None:
+    st.write('## Please upload a file')
+    st.stop()
+
+game=Game(uploaded_file)
+GS = GameStats(game, streamlit_model, features)
 
 
 
-st.title('Wheel of Time NLP')
-st.write('## Topics over time ##')
-book = st.selectbox('Select a book', ['All books']+titles)
 
-if book == 'All books':
-    st.image('saved_models/topicsovertime2.png', use_container_width=True)
+
+
+show_stocks = st.checkbox('Show stock losses on graph')
+win_prob = GS.plot_odds(show_stocks=show_stocks, ret=True)
+st.plotly_chart(win_prob, use_container_width=True)
+if show_stocks:
+    st.markdown('*Colored vertical lines correspond to player of same color losing a stock*')
+
+
+
+
+st.write(f"""## Game Stats:""")
+st.write(f"""### Winner: P{GS.winner_port+1} ({GS.winner_str})""")
+st.write(f"""### Lead changes: {GS.lead_changes()}""")
+st.write(f"""### Closeness factor: {GS.closeness_factor()}/100""")
+st.write(f"""### Comeback factor: {GS.comeback_factor()}/100""")
+st.write(f"""### Turning point: {GS.turning_point()} seconds""")
+if GS.clutch():
+    st.write(f"""### This game was clutch""")
 else:
-    booknum = titles.index(book)+1
-    f= plot_chapter_topics_book(tbc, booknum, ret=True )
-    st.pyplot(f)
+    st.write(f"""### This game was not clutch""")
+
+with st.beta_expander("See explanation of stats"):
+    st.markdown("""
+        * Lead changes: The number of times the lead in *odds of winning* changed
+        * Closeness factor: Percent of the game when either players' odds of winning were between 35 and 65 percent
+        * Comeback factor: 100 - 2 * (minimum odds of winning player), minimum of 0. The higher the score, the lower the minimum winning odds at any of the ultimate winner. Doesn't look at the first 10 seconds, because those can be noisy
+        * Turning point: Time when the winner took the lead in win probability and never lost it.
+        * Clutch: A game was clutch if the winner's odds of winning in the last 20 seconds was less than 0.5
+    """)
 
 
 
-
-
-#Side by side of topic word cloud and occurrence of topic over time
-topic = st.selectbox('Select a topic', topics)
-topic_index = topics.index(topic)
 col1, col2 = st.beta_columns(2)
 with col1:
-    wordcloud = topic_wordcloud(nmf_model, vec_feature_names, topic_index, topics, ret = True)
-    st.pyplot(wordcloud)
+    p1_icon = 'icons/'+GS.get_final_stat('p1_char') + '.png'
+    p1_ground = int(GS.get_final_stat('p1_ground_hits'))
+    p1_smash  = int(GS.get_final_stat('p1_smash_hits'))
+    p1_aerial = int(GS.get_final_stat('p1_aerial_hits'))
+    p1_other  = int(GS.get_final_stat('p1_total_hits') - p1_ground-p1_smash-p1_aerial)
+    p1_grabs  = int(GS.get_final_stat('p1_grabs'))
+    p1_shield =     GS.get_final_stat('p1_shield_frames')/60
+
+    st.write(f"""## P{GS.port1+1} stats""")
+    st.image(p1_icon)
+    st.markdown(f"""* Ground attacks (Jabs, dash attacks, tilts) landed: {p1_ground}""")
+    st.markdown(f"""* Smashes landed: {p1_smash}""")
+    st.markdown(f"""* Aerials landed: {p1_aerial}""")
+    st.markdown(f"""* Other attacks (specials, getup, etc.) landed: {p1_other}""")
+    st.markdown(f"""* Successful grabs: {p1_grabs}""")
+    st.markdown(f"""* Seconds in shield: {p1_shield:.1f}""")
 with col2:
-    topic_over_time = plot_topic_time(tbc,topic,ret=True)
-    st.pyplot(topic_over_time)
+    p2_icon = 'icons/'+GS.get_final_stat('p2_char') + '.png'
+    p2_ground = int(GS.get_final_stat('p2_ground_hits'))
+    p2_smash  = int(GS.get_final_stat('p2_smash_hits'))
+    p2_aerial = int(GS.get_final_stat('p2_aerial_hits'))
+    p2_other  = int(GS.get_final_stat('p2_total_hits') - p1_ground-p1_smash-p1_aerial)
+    p2_grabs  = int(GS.get_final_stat('p2_grabs'))
+    p2_shield =     GS.get_final_stat('p2_shield_frames')/60
 
-#Character connection graph
-st.write('## Character connection graph ##')
-chap = st.slider('Select a chapter number', min_value = 1, max_value = 676, step = 1)
-
-#Parameters for graphing
-show_all = st.checkbox('Show all connections regardless of size (recommended for early chapters)')
-set_width = None
-if show_all: set_width = 2
-
-chap_name = graphs_df['book_title'][chap] + ' chapter ' +str(graphs_df['chapter_nr'][chap]) + ': ' + graphs_df['chapter_title'][chap]
-st.write('### Character connections as of {} ###'.format(chap_name))
-
-
-graph = graphs_df['cumulative_networkx'][chap]
-graph_fig = plot_network(graph, chars=important_chars,set_width = set_width, show_all=show_all, output='return')
-st.plotly_chart(graph_fig, use_container_width=True)
+    st.write(f"""## P{GS.port2+1} stats""")
+    st.image(p2_icon)
+    st.markdown(f"""* Ground attacks (Jabs, dash attacks, tilts) landed: {p2_ground}""")
+    st.markdown(f"""* Smashes landed: {p2_smash}""")
+    st.markdown(f"""* Aerials landed: {p2_aerial}""")
+    st.markdown(f"""* Other attacks (specials, getup, etc.) landed: {p2_other}""")
+    st.markdown(f"""* Successful grabs: {p2_grabs}""")
+    st.markdown(f"""* Seconds in shield: {p2_shield:.1f}""")

@@ -19,7 +19,7 @@ from sklearn.base import clone
 
 import seaborn as sns
 import matplotlib.pyplot as plt
-from data_utils import construct_df, ohe_chars_stage
+from utils.data_utils import construct_df, ohe_chars_stage
 
 
 def get_log_losses(X_test, y_test, model):
@@ -29,14 +29,15 @@ def get_log_losses(X_test, y_test, model):
     return log_loss
 
 
-def plot_log_loss(X_test, y_test,model):
+def plot_log_loss(X_test, y_test,model,title=''):
     Xt_copy = X_test.copy()
     Xt_copy['log_loss'] = get_log_losses(X_test,y_test, model)
     df = Xt_copy.groupby(['frames_elapsed'])[['log_loss']].mean().reset_index()
     plt.figure(figsize=(12,8))
     sns.lineplot(x=df['frames_elapsed']/60, y=df['log_loss'] )
-    plt.ylabel('Average Log Loss at time')
+    plt.ylabel('Average Log Loss')
     plt.xlabel('Time elapsed (s)')
+    plt.title(title)
     plt.xlim((0,480))
     plt.show()
 
