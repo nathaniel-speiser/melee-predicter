@@ -8,7 +8,7 @@ import os
 
 for root, dirs, files in os.walk("."):
     for filename in files:
-        print(filename)
+        st.write(filename)
 dir = os.path.dirname(__file__)
 f1 = os.path.join(dir, 'saved_data/streamlit_model.pkl')
 f2 = os.path.join(dir, 'saved_data/features.pkl')
