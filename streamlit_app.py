@@ -4,21 +4,11 @@ import pandas as pd
 from utils.GameStats import GameStats
 st.set_page_config(layout='wide')
 
-import os
-
-for root, dirs, files in os.walk("."):
-    for filename in files:
-        st.write(filename)
-dir = os.path.dirname(__file__)
-f1 = os.path.join(dir, 'saved_data/streamlit_model.pkl')
-f2 = os.path.join(dir, 'saved_data/features.pkl')
 ##############################################################
 # Importing data/models
-#streamlit_model = pd.read_pickle('saved_data/streamlit_model.pkl')
-#features = pd.read_pickle('saved_data/features.pkl')
+streamlit_model = pd.read_pickle('saved_data/streamlit_model.pkl')
+features = pd.read_pickle('saved_data/features.pkl')
 
-streamlit_model = pd.read_pickle(f1)
-features = pd.read_pickle(f2)
 
 ##################################################################
 
