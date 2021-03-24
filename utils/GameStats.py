@@ -25,6 +25,8 @@ from utils.modeling_utils import plot_log_loss, plot_multiple_log_loss, CV_model
                             plot_win_probs, get_log_losses, validate_model
 
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 
 
 
@@ -130,8 +132,10 @@ class GameStats():
         time = self.game_df['frames_elapsed']/60
         fig = go.Figure()
 
+
         fig.add_trace(
             go.Scatter(x=time, y=self.p1_odds,name = f'P{self.port1+1} ({self.char1})'))
+
 
         fig.add_trace(
             go.Scatter(x=time, y=self.p2_odds,name = f'P{self.port2+1} ({self.char2})'))
