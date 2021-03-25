@@ -31,6 +31,41 @@ from plotly.subplots import make_subplots
 
 
 class GameStats():
+    """
+    Container class for stats for a specific game, as calculated by a prefit model
+
+    Parameters:
+
+    Game: PySlippi Game to get stats on
+    Model: Prefit sklearn or sklearn-style model used to calculate win probability
+    Features: Features the model is trained on
+
+    Attributes:
+    port1, port2: Ports occupied by players. port1 = lower port player, port2 = higher port player
+    char1, char2: Names of characters players are playing
+    stage: Stage being played on
+    winner: 1 if player 1 (lower port player) won, 0 if player 2 won
+    winner_str: Character of winning player
+    winner_port: Port of winning player
+    game_df: pandas DataFrame representing games - rows are timeslices, columns are features in self.features, plus others
+    p1_odds, p2_odds: Array of p1/p2 win odds over time. Together sum to 1
+
+    Methods:
+
+
+    get_p1_odds:
+
+
+    get_final_stat:
+        Return the final value (i.e. value at the end of a game) for a given feature
+
+        Args:
+
+        feature (str): Name of feature/column in game_df
+
+
+    """
+
     def __init__(self, game, model,features):
         self.game = game
         self.model = model
@@ -47,6 +82,9 @@ class GameStats():
         self.p2_odds = 1-self.p1_odds
 
     def make_game_df(self):
+        """
+        Return df representing game, used to set game_df
+        """
         df_list = []
         rows = make_rows_igs(self.game, 1, '')
         df_list.append(rows)
@@ -57,6 +95,13 @@ class GameStats():
         return  self.model.predict_proba(self.game_df[self.features])[:,1]
 
     def get_final_stat(self,feature):
+        """
+        Return the final value (i.e. value at the end of a game) for a given feature
+
+        Args:
+
+        feature (str): Name of feature/column in game_df
+        """
         try:
             return self.game_df.iloc[-1][feature]
         except:
@@ -64,6 +109,9 @@ class GameStats():
             return None
 
     def lead_changes(self):
+        """
+        Calculate and return number of time the lead changes, i.e. number of times p1_odds crosses 0.5
+        """
         leads = np.rint(self.p1_odds)
         changes = 0
         for i in range(10,len(leads)):
@@ -73,13 +121,17 @@ class GameStats():
 
     def closeness_factor(self):
         """
-        Percent of seconds spent betwen 35 and 65 percent odds
+        Calculate and return percent of seconds spent betwen 35 and 65 percent odds
         """
         num_seconds_close = len(self.p1_odds[(self.p1_odds >=.35)&(self.p1_odds <=.65)])
         return round(num_seconds_close/len(self.p1_odds)*100)
 
 
     def comeback_factor(self):
+        """
+        Calculate and return comeback factor of winner - defined as 100 - 2 * [lowest odds winner ever had of winning], min of 0
+        (If winner was never losing)
+        """
         lowest_odds = 0
         if self.winner == 1:
             lowest_odds = np.min(self.p1_odds[10:])
@@ -92,7 +144,7 @@ class GameStats():
     def turning_point(self):
         """
         Returns time when winner passed 50% odds and never went below 50%
-        If the winner wasn't above 50% will return something else
+        If the winner wasn't above 50% will just return the last second of the match
         """
         if self.winner == 1:
             for i, odds in enumerate(self.p1_odds[::-1]):
@@ -108,6 +160,10 @@ class GameStats():
         """
         Returns True if the average win probability of the winner of the game was less than .5 in the last window
         seconds of the game
+
+        Args:
+
+        Window (int): Number of seconds at the end to average over to determine if game was clutch
         """
         if self.winner == 1:
             return np.mean(self.p1_odds[-window:])<.5
@@ -115,6 +171,9 @@ class GameStats():
             return np.mean(self.p2_odds[-window:])<.5
 
     def get_stock_loss_times(self):
+        """
+        Return lists of times when both players lost stocks, in seconds
+        """
         p1_losses = []
         p2_losses = []
         p1_stocks = 4
@@ -129,6 +188,14 @@ class GameStats():
         return p1_losses, p2_losses
 
     def plot_odds(self,show_stocks=True, ret = False):
+        """
+        Generate/return plot showing odds over time of winning
+
+        Args:
+
+        show_stocks: If True, shows stock losses for both players as dotted vertical liens
+        ret: If True, returns figure. If False, plots it.
+        """
         time = self.game_df['frames_elapsed']/60
         fig = go.Figure()
 

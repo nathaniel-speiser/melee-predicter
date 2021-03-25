@@ -18,21 +18,52 @@ stage_dict = {'BATTLEFIELD':'Battlefield', 'FINAL_DESTINATION':'Final Destinatio
                'DREAM_LAND_N64':'Dream Land', 'YOSHIS_STORY': 'Yoshi\'s Story',
                 'FOUNTAIN_OF_DREAMS': 'Fountain of Dreams','POKEMON_STADIUM':'Pokemon Stadium'}
 def get_ports(game):
+    """
+    Returns tuple of ports occupied by players in Slippi Game
+
+    Args:
+
+    game: PySlippi Game
+
+    """
     player_tup = game.start.players
     ports = tuple([i for i in range(4) if player_tup[i] is not None])
     return ports
 
 def get_characters(game, port1, port2):
+    """
+    Returns tuple of characters (Fox, Falco, etc.) being played by players in occupied ports
+
+    Args:
+
+    game: PySlippi Game
+    port1 (int): First occupied port
+    port2 (int): Second occupied port
+
+    """
     player_tup = game.start.players
     chars = (player_tup[port1].character.name,player_tup[port2].character.name )
     return chars
 
 def get_stage(game):
+    """
+    Returns stage Slippi Game is being played on
+
+    Args:
+
+    game: PySlippi Game
+
+    """
     return game.start.stage.name
 
 def get_winner(game, port1, port2):
     """
     Returns if player with lower port is winner
+
+    Args:
+    game: PySlippi Game
+    port1 (int): First occupied port
+    port2 (int): Second occupied port
     """
     lras = game.end.lras_initiator
     if lras is not None:
@@ -52,6 +83,12 @@ def get_winner(game, port1, port2):
 
 
 def is_valid_game(game):
+    """
+    Returns true only if game is valid
+    Valid games defined as games more than 15 seconds long, ended conclusively, isn't teams, and is on a legal stage
+    """
+
+
     if game.metadata.duration < 15*60:
         return False
     if game.end.method.value != 3 and game.end.method.value != 1 and game.end.method.value!= 2:
@@ -66,7 +103,13 @@ def is_valid_game(game):
 
 def make_rows(game, num_seconds, game_id):
     """
-    Make a df for each game. Rows are timeslices, every num_seconds of the game, as well as the first and last frames
+    Make a basic df for each game. Rows are timeslices, every num_seconds of the game, as well as the first frame.
+    Columns are game_id, characters, stage, time, stocks, damage, and winner
+
+    Args:
+
+    num_seconds: How often to sample the game, in seconds
+    game_id: Identifier for game
 
     """
 
@@ -107,6 +150,14 @@ def make_rows(game, num_seconds, game_id):
 
 
 def construct_df(file_list, num_seconds):
+    """
+    Make a df out of all the games in file_list, using make_rows
+
+    Args:
+
+    file_list: List of .slp files
+    num_seconds: How often each game is sampled, in seconds
+    """
     df_list = []
     for slp_file in tqdm(file_list,desc='Games parsed'):
         try:
@@ -129,6 +180,22 @@ ROLL_STATES = [233,234]
 SHIELD_STATES = [178,179,180,181]
 
 def get_ingame_stats(game, times, port1,port2):
+    """
+    Returns tuple of lists of game stats for each player
+    Each entry in each list is that stat at the corresponding index in time
+    Stats (for each player): Number of hits landed, number of ground attacks landed, number of smashes landed, number of aerials landed, number of successful grabs, number of frames in shield, number of rolls, stocks lost before 50%, number of frames since last stock was lost
+
+    Args:
+
+    game: PySlippi game
+    times: List of int, times to sample statistics at
+    port1: Port number of lower port player
+    port2: Port number of higher port player
+
+    """
+
+
+
     #Total number of hits that player 1 landed
     p1_hits_landed = 0
     #Jab, dash attack, tilts
@@ -269,7 +336,12 @@ igs_col_names = ['p1_total_hits', 'p1_ground_hits','p1_smash_hits','p1_aerial_hi
 def entered_state(p_cur, p_prev, state_list):
     """
     Returns true if player entered state in state_list in the current frame
-    p_cur, p_prev are post objects, ie game. ... .leader.post
+
+    Args:
+
+    p_cur: post object for current frame, ie game. ... .leader.post
+    p_prev: post object for previous frame, ie game. ... .leader.post
+    state_list: List of ints representing action states
 
     """
 
@@ -285,7 +357,15 @@ def entered_state(p_cur, p_prev, state_list):
 
 def make_rows_igs(game, num_seconds, game_id):
     """
-    Make a df for each game. Rows are timeslices, every num_seconds of the game
+    Make a df, with both in basic features and in game stats colums, for a game. Rows are timeslices, every num_seconds of the game, as well as the first frame.
+    Columns are game_id, characters, stage, time, stocks, damage, winner, and ingame stats for each player from get_ingame_stats
+
+    Args:
+
+    game: PySlippi Game
+    num_seconds: How often to sample the game, in seconds
+    game_id: Identifier for game
+
     """
 
     port1, port2 = get_ports(game)
@@ -328,6 +408,14 @@ def make_rows_igs(game, num_seconds, game_id):
 
 
 def construct_df_igs(file_list, num_seconds):
+    """
+    Make a df with ingame stats columns out of all the games in file_list, using make_rows_igs
+
+    Args:
+
+    file_list: List of .slp files
+    num_seconds: How often each game is sampled, in seconds
+    """
     df_list = []
     for slp_file in tqdm(file_list,desc='Games parsed'):
         try:
@@ -345,6 +433,10 @@ def process_df_igs(df):
     """
     Add difference features to df (output from construct_df_igs), then OHE characters and stages.
     Return the new df and all the features
+
+    Args:
+
+    df: Pandas DataFrame, output from construct_df_igs
     """
     df2 = df.copy()
     df2 = ohe_chars_stage(df2)
@@ -363,8 +455,12 @@ def process_df_igs(df):
 
 def process_df_igs_final(df):
     """
-    Add difference features to df (output from construct_df_igs), then OHE characters and stages.
+    Add selected difference features to df (output from construct_df_igs), then OHE characters and stages.
     Return the new df and all the features
+
+    Args:
+
+    df: Pandas DataFrame, output from construct_df_igs
     """
     df2 = df.copy()
     df2 = ohe_chars_stage(df2)
@@ -379,6 +475,13 @@ def process_df_igs_final(df):
 
 
 def ohe_chars_stage(df):
+    """
+    One-hot encode characters and stage
+
+    Args:
+
+    df: Pandas DataFrame with colums p1_char, p2_char, and stage
+    """
     characters = ['FOX', 'FALCO', 'MARTH', 'SHEIK','JIGGLYPUFF', 'PEACH', 'ICE_CLIMBERS','CAPTAIN_FALCON',
                  'PIKACHU','SAMUS','DR_MARIO','YOSHI','LUIGI','GANONDORF','MARIO','YOUNG_LINK','DONKEY_KONG',
                  'LINK','GAME_AND_WATCH','ROY','MEWTWO','ZELDA','NESS','PICHU','BOWSER','KIRBY']
