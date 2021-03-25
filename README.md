@@ -3,9 +3,9 @@
 
 ## Description
 
-In this project I created a pipeline to create in-game win proability graphs (examples for basketball ![here](https://live.numberfire.com/ncaab)) for games of Super Smash Bros. Melee, a competitive fighting game released by Nintendo in 2001.
+In this project I created a pipeline to create in-game win proability graphs (examples for basketball [here](https://live.numberfire.com/ncaab)) for games of Super Smash Bros. Melee, a competitive fighting game released by Nintendo in 2001.
 
-The data I used to create a model than can predict these win probabilites were 18,000 games from 5 tournaments in 2019, sourced from the ![Slippi Discord](https://discord.com/channels/328261477372919811/652736425997107220), specifically the bot-commands channel. These games came in the form of .slp replay files, a file format unique to the community-written tool ![Slippi](https://slippi.appspot.com/). To parse the games with Python I used another community written tool, the ![py-slippi package](https://github.com/hohav/py-slippi).
+The data I used to create a model than can predict these win probabilites were 18,000 games from 5 tournaments in 2019, sourced from the [Slippi Discord](https://discord.com/channels/328261477372919811/652736425997107220), specifically the bot-commands channel. These games came in the form of .slp replay files, a file format unique to the community-written tool [Slippi](https://slippi.appspot.com/). To parse the games with Python I used another community written tool, the ![py-slippi package](https://github.com/hohav/py-slippi).
 
 I used py-slippi to take take snapshots of each game every 5 seconds and extract features at these times. These features included basic information, such as time, stock count, and character selection, but I used more advanced logic to extract in game statistics such as the number of times each player landed certain moves. I then processed this data to one-hot encode categorical features as well as create features that measured the relative performance of the two players, such as the difference in the total number of hits. I fed this processed data into several models, the best of which was a sklearn ExtraTrees Classifier, whose predict_proba method I then used to predict win probabilities.
 
